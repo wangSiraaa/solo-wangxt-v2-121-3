@@ -7,6 +7,7 @@ import CurveChart from "./components/CurveChart";
 import CutEditor from "./components/CutEditor";
 import ResultsPanel from "./components/ResultsPanel";
 import IssuesPanel from "./components/IssuesPanel";
+import SensitivityPanel from "./components/SensitivityPanel";
 
 function defaultCuts(sample: CurveSample) {
   const [lo, hi] = sample.range.temp_c;
@@ -74,6 +75,16 @@ export default function App() {
     () => ({ name: planName, basis, loss_pct: Number.isFinite(lossPct) ? lossPct : 0, cuts }),
     [planName, basis, lossPct, cuts]
   );
+
+  // 方案的稳定签名：预览据此判断自己是否已过期（不写入已保存方案）
+  const planSignature = useMemo(() => JSON.stringify(payload), [payload]);
+
+  const applyPreviewCuts = useCallback((nextCuts: PlanInput["cuts"], label: string) => {
+    setCuts(nextCuts);
+    setError(null);
+    setAppliedNote(label);
+  }, []);
+  const [appliedNote, setAppliedNote] = useState<string | null>(null);
 
   const timer = useRef<number | null>(null);
   const evaluate = useCallback(() => {
@@ -182,6 +193,20 @@ export default function App() {
             onBasisChange={setBasis}
             onPlanNameChange={setPlanName}
           />
+
+          <SensitivityPanel
+            expId={expId as number}
+            plan={payload}
+            range={sample.range.temp_c}
+            planSignature={planSignature}
+            onApply={applyPreviewCuts}
+          />
+          {appliedNote && (
+            <div className="applied-note">
+              已把预览切点带回编辑器并按同一规则重新计算：{appliedNote}
+              <button onClick={() => setAppliedNote(null)}>×</button>
+            </div>
+          )}
 
           <ResultsPanel result={result} basis={basis} />
 

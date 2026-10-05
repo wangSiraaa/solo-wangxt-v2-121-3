@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 # ---- 试验 ----
@@ -73,3 +73,19 @@ class PlanOut(BaseModel):
     result_snapshot: dict | None = None
 
     model_config = {"from_attributes": True}
+
+
+# ---- 切点敏感性预览 ----
+class SensitivityIn(BaseModel):
+    """单切点温度扰动预览：同一套方案规则下计算原/下/上三个情景，不落库。"""
+
+    plan: PlanIn
+    cut_index: int = Field(..., ge=0, description="被扰动切点所在馏分的下标（从 0 起）")
+    endpoint: Literal["start", "end"] = Field(..., description="扰动该馏分的初馏点还是终馏点")
+    step_c: float = Field(..., gt=0, le=500, description="温度扰动步长 ℃（分别向下/向上各扰一次）")
+
+    @model_validator(mode="after")
+    def _cut_index_in_range(self) -> "SensitivityIn":
+        if self.cut_index >= len(self.plan.cuts):
+            raise ValueError("cut_index 超出当前方案的馏分数量")
+        return self

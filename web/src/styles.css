@@ -102,3 +102,98 @@ tr.sum td { background: #f8fafc; font-weight: 600; }
 }
 .banner.error button { border: none; background: none; color: inherit; cursor: pointer; font-size: 16px; }
 .seed-msg { font-size: 13px; color: #166534; }
+
+/* ---- 切点敏感性预览 ---- */
+.sensitivity { border: 1px solid #bfdbfe; border-radius: 8px; margin: 12px 0; background: #fafcff; }
+.sens-head {
+  display: flex; align-items: baseline; gap: 8px; padding: 10px 14px; cursor: pointer;
+  user-select: none; flex-wrap: wrap;
+}
+.sens-head:hover { background: #eff6ff; border-radius: 8px; }
+.sens-head h3 { margin: 0; color: #1e40af; }
+.twisty { color: #1e40af; }
+.sens-sub { font-size: 12.5px; color: var(--gray); }
+.sens-body { padding: 4px 14px 14px; }
+.sens-controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin: 8px 0; }
+.sens-controls label { font-size: 13px; display: flex; flex-direction: column; gap: 4px; color: #374151; }
+.sens-controls select, .sens-controls input { padding: 5px 8px; border: 1px solid #d1d5db; border-radius: 5px; font-size: 13px; min-width: 150px; }
+.btn.tiny { padding: 3px 10px; font-size: 12px; }
+
+.table-wrap { overflow-x: auto; margin: 8px 0; }
+.sens-table { font-size: 12.5px; min-width: 860px; }
+.sens-table th { text-align: center; background: #eef2ff; }
+.sens-table td { text-align: center; font-variant-numeric: tabular-nums; }
+.sens-table td.base { background: #f8fafc; font-weight: 600; }
+.sens-table td.pos { color: #b91c1c; font-weight: 600; }
+.sens-table td.neg { color: #1d4ed8; font-weight: 600; }
+.sens-table td.zero { color: #9ca3af; }
+.sens-table tr.perturbed td { background: #eff6ff; }
+.sens-table tr.perturbed td.base { background: #dbeafe; }
+.sens-table tr.shared td { box-shadow: inset 3px 0 0 #0891b2; }
+.sens-table tr.max-vol td { box-shadow: inset 0 -3px 0 #f59e0b; }
+.sens-table tr.perturbed.max-vol td { background: #fff7ed; }
+.sens-table tr.perturbed.max-vol td.base { background: #ffedd5; }
+.sens-table .cut-name { text-align: left; position: relative; min-width: 150px; }
+.tag-mini {
+  display: inline-block; font-size: 10.5px; margin-left: 5px; padding: 0 6px;
+  border-radius: 9px; background: #e0e7ff; color: #3730a3; white-space: nowrap;
+}
+.tag-mini.sel { background: #1d4ed8; color: #fff; }
+.tag-mini.vol { background: #fef3c7; color: #92400e; }
+.tag-mini.mass { background: #dcfce7; color: #166534; }
+.mini-bar { display: block; height: 3px; background: #e5e7eb; border-radius: 2px; margin-top: 3px; width: 120px; }
+.mini-bar span { display: block; height: 100%; background: #f59e0b; border-radius: 2px; }
+
+.max-callouts { display: flex; gap: 14px; flex-wrap: wrap; margin: 8px 0; }
+.callout { font-size: 13px; padding: 5px 12px; border-radius: 6px; }
+.callout.vol { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+.callout.mass { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+
+.member-bar {
+  border: 1px solid #bfdbfe; background: #fff; border-radius: 8px;
+  padding: 10px 12px; margin: 8px 0; display: flex; gap: 16px; flex-wrap: wrap;
+  align-items: stretch;
+}
+.member-info { font-size: 13px; flex: 1 1 260px; color: #334155; }
+.moved-note { display: block; color: var(--gray); font-size: 12px; margin-top: 4px; }
+.candidates { display: flex; gap: 10px; flex-wrap: wrap; }
+.cand {
+  border: 1px solid #d1d5db; border-radius: 8px; padding: 8px 12px; min-width: 150px;
+  display: flex; flex-direction: column; gap: 5px; align-items: flex-start; background: #fff;
+}
+.cand.oor { border-color: #f59e0b; background: #fffbeb; }
+.cand.applied { border-color: #16a34a; background: #f0fdf4; }
+.cand-label { font-size: 12px; color: var(--gray); }
+.cand-temp { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.cand-oor { font-size: 11.5px; color: #92400e; line-height: 1.4; }
+
+.sens-cols { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 6px; }
+.sens-cols > div { flex: 1 1 380px; }
+.sens-cols h4, .sens-body h4 { font-size: 13.5px; margin: 12px 0 6px; }
+.sens-mini { font-size: 12.5px; }
+.sens-mini th { background: #f1f5f9; text-align: center; }
+.sens-mini td { text-align: center; font-variant-numeric: tabular-nums; }
+.sens-mini td:first-child { text-align: left; }
+.sens-mini tr.warn-row { background: #fffbeb; }
+.sens-mini td.muted { color: #9ca3af; background: #f8fafc; }
+.sens-mini .sub-range { display: block; font-size: 10.5px; color: var(--gray); }
+.sens-mini .loc { color: var(--gray); font-size: 11px; margin-left: 4px; }
+.sens-mini.closure tr.strong td { background: #eef2ff; font-weight: 600; }
+.ok-cls { color: #166534; font-weight: 700; }
+.bad-cls { color: #991b1b; font-weight: 700; }
+.warn-cls { color: #92400e; }
+
+.sens-issues { margin-top: 8px; }
+.sens-issue-group { display: flex; gap: 6px; align-items: flex-start; flex-wrap: wrap; margin: 4px 0; }
+.sc-tag { font-size: 11.5px; font-weight: 700; color: #1e40af; background: #dbeafe; border-radius: 4px; padding: 1px 7px; }
+.mini-issue { font-size: 11.5px; padding: 2px 8px; border-radius: 4px; border: 1px solid; }
+.mini-issue.warning { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+.mini-issue.error { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+.mini-issue.info { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+
+.applied-note {
+  background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534;
+  border-radius: 6px; padding: 7px 12px; font-size: 13px; margin: 8px 0;
+  display: flex; justify-content: space-between; gap: 10px;
+}
+.applied-note button { border: none; background: none; color: inherit; cursor: pointer; font-size: 15px; }

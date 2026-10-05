@@ -9,6 +9,7 @@ POST /api/experiments
 GET  /api/experiments/{id}
 GET  /api/experiments/{id}/curve/sample
 POST /api/experiments/{id}/evaluate                 仅计算，不落库
+POST /api/experiments/{id}/sensitivity              单切点 ±步长 敏感性预览，不落库
 POST /api/experiments/{id}/plans                    保存方案
 GET  /api/plans/{id}                                读方案（重新计算）
 GET  /api/plans/{id}/export?format=markdown|json    导出
@@ -34,7 +35,8 @@ from .density import prepare_density
 from .exporters import build_markdown, to_json
 from .models import Experiment, Plan
 from .planning import evaluate_plan
-from .schemas import ExperimentIn, ExperimentOut, PlanIn, PlanOut
+from .schemas import ExperimentIn, ExperimentOut, PlanIn, PlanOut, SensitivityIn
+from .sensitivity import sensitivity_preview
 
 app = FastAPI(
     title="蒸馏曲线切点与产率核对（培训）",
@@ -227,6 +229,37 @@ async def evaluate(exp_id: int, payload: PlanIn) -> dict:
         if exp is None:
             raise HTTPException(404, "试验不存在")
         return _eval_experiment(exp, payload)
+
+
+@app.post("/api/experiments/{exp_id}/sensitivity")
+async def sensitivity(exp_id: int, payload: SensitivityIn) -> dict:
+    """单切点 ±步长 敏感性预览：同规则三情景计算，不落库、不改写已保存方案。"""
+    async for session in get_session():
+        exp = await session.get(Experiment, exp_id)
+        if exp is None:
+            raise HTTPException(404, "试验不存在")
+        curve = prepare_curve(exp.points)
+        density = prepare_density(exp.density_rows or [])
+
+        def _evaluate(cuts: list[dict]) -> dict:
+            return evaluate_plan(
+                curve=curve,
+                cuts=cuts,
+                loss_pct=payload.plan.loss_pct,
+                basis=payload.plan.basis,
+                density=density,
+                feed_density=exp.feed_density_g_cm3,
+                residue_density=exp.residue_density_g_cm3,
+            )
+
+        return sensitivity_preview(
+            evaluate=_evaluate,
+            cuts=[c.model_dump() for c in payload.plan.cuts],
+            cut_index=payload.cut_index,
+            endpoint=payload.endpoint,
+            step_c=payload.step_c,
+            temp_range=(curve.t_min, curve.t_max),
+        )
 
 
 @app.post("/api/experiments/{exp_id}/plans", status_code=201)
