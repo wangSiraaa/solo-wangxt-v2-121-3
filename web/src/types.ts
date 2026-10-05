@@ -147,3 +147,40 @@ export interface CurveSample {
   issues: Issue[];
   has_blocking_errors: boolean;
 }
+
+// ---- 切点敏感性预览 ----
+export interface SensitivityInput {
+  plan: PlanInput;
+  cut_index: number;
+  endpoint: "start" | "end";
+  step_c: number;
+}
+
+export interface SensitivityCutDelta {
+  index: number;
+  name: string;
+  volume_delta_pct: number | null;
+  mass_delta_pct: number | null;
+}
+
+export interface SensitivityScenario {
+  key: "down" | "base" | "up";
+  label: string;
+  temp_c: number;
+  out_of_range: boolean;
+  range_note: string | null;
+  result: EvalResult;
+  cut_deltas: SensitivityCutDelta[];
+  most_affected_cut_index: number | null;
+}
+
+export interface SensitivityResult {
+  cut_index: number;
+  cut_name: string;
+  endpoint: "start" | "end";
+  endpoint_label: string;
+  original_temp_c: number;
+  step_c: number;
+  applicable_range: { temp_c: [number, number]; extrapolation: string };
+  scenarios: SensitivityScenario[];
+}

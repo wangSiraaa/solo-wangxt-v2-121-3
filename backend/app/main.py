@@ -9,6 +9,7 @@ POST /api/experiments
 GET  /api/experiments/{id}
 GET  /api/experiments/{id}/curve/sample
 POST /api/experiments/{id}/evaluate                 仅计算，不落库
+POST /api/experiments/{id}/sensitivity              单切点 ±ΔT 敏感性预览（仅计算）
 POST /api/experiments/{id}/plans                    保存方案
 GET  /api/plans/{id}                                读方案（重新计算）
 GET  /api/plans/{id}/export?format=markdown|json    导出
@@ -34,7 +35,8 @@ from .density import prepare_density
 from .exporters import build_markdown, to_json
 from .models import Experiment, Plan
 from .planning import evaluate_plan
-from .schemas import ExperimentIn, ExperimentOut, PlanIn, PlanOut
+from .schemas import ExperimentIn, ExperimentOut, PlanIn, PlanOut, SensitivityIn
+from .sensitivity import evaluate_sensitivity
 
 app = FastAPI(
     title="蒸馏曲线切点与产率核对（培训）",
@@ -62,9 +64,13 @@ async def health() -> dict:
 
 
 # ---- 公共计算辅助 ----
+def _prepare(exp: Experiment):
+    """构造校验后的曲线与密度模型（敏感性预览与方案计算共用）。"""
+    return prepare_curve(exp.points), prepare_density(exp.density_rows or [])
+
+
 def _eval_experiment(exp: Experiment, payload: PlanIn) -> dict:
-    curve = prepare_curve(exp.points)
-    density = prepare_density(exp.density_rows or [])
+    curve, density = _prepare(exp)
     return evaluate_plan(
         curve=curve,
         cuts=[c.model_dump() for c in payload.cuts],
@@ -227,6 +233,34 @@ async def evaluate(exp_id: int, payload: PlanIn) -> dict:
         if exp is None:
             raise HTTPException(404, "试验不存在")
         return _eval_experiment(exp, payload)
+
+
+@app.post("/api/experiments/{exp_id}/sensitivity")
+async def sensitivity(exp_id: int, payload: SensitivityIn) -> dict:
+    """单切点 ±step_c 扰动预览：只计算，不落库、不修改已保存方案。"""
+    async for session in get_session():
+        exp = await session.get(Experiment, exp_id)
+        if exp is None:
+            raise HTTPException(404, "试验不存在")
+        if payload.cut_index >= len(payload.plan.cuts):
+            raise HTTPException(
+                422,
+                f"cut_index {payload.cut_index} 超出方案馏分数 "
+                f"{len(payload.plan.cuts)}",
+            )
+        curve, density = _prepare(exp)
+        return evaluate_sensitivity(
+            curve=curve,
+            density=density,
+            feed_density=exp.feed_density_g_cm3,
+            residue_density=exp.residue_density_g_cm3,
+            cuts=[c.model_dump() for c in payload.plan.cuts],
+            loss_pct=payload.plan.loss_pct,
+            basis=payload.plan.basis,
+            cut_index=payload.cut_index,
+            endpoint=payload.endpoint,
+            step_c=payload.step_c,
+        )
 
 
 @app.post("/api/experiments/{exp_id}/plans", status_code=201)

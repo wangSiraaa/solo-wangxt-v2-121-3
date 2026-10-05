@@ -102,3 +102,25 @@ tr.sum td { background: #f8fafc; font-weight: 600; }
 }
 .banner.error button { border: none; background: none; color: inherit; cursor: pointer; font-size: 16px; }
 .seed-msg { font-size: 13px; color: #166534; }
+
+/* 切点敏感性预览 */
+.sens h3 { margin-top: 4px; }
+.sens h4 { font-size: 13.5px; margin: 14px 0 6px; }
+.sens-head { font-size: 13px; color: #374151; margin: 10px 2px 6px; }
+.sens-table th, .sens-totals th { text-align: center; }
+.sens-table td { text-align: right; font-variant-numeric: tabular-nums; }
+.sens-table td:first-child, .sens-totals td:first-child { text-align: left; }
+.sens-table th.oor { background: #fffbeb; }
+.sens-table td.most { background: #fef3c7; }
+.sens-table tr.most-row td:first-child { background: #fef3c7; font-weight: 600; }
+.sens-table .delta { font-size: 11px; color: var(--gray); }
+.sens-table .flags { justify-content: flex-end; margin-top: 2px; }
+.sens-table tr.apply-row td { background: var(--bg-soft); text-align: center; }
+.sens-table tr.apply-row td:first-child { text-align: left; color: var(--gray); font-size: 12.5px; }
+.sens-totals td { text-align: right; font-variant-numeric: tabular-nums; }
+.sens-totals td.ok { color: #166534; }
+.sens-totals td.bad { color: #991b1b; }
+.pill.most { background: #fde68a; color: #92400e; margin-left: 6px; }
+.stale-note { font-size: 12.5px; color: var(--amber); margin: 8px 2px 0; }
+.range-note { font-size: 12.5px; color: #92400e; margin: 6px 2px 0; }
+.muted { color: var(--gray); font-size: 12.5px; }

@@ -3,6 +3,8 @@ import type {
   EvalResult,
   Experiment,
   PlanInput,
+  SensitivityInput,
+  SensitivityResult,
 } from "./types";
 
 async function req<T>(url: string, init?: RequestInit): Promise<T> {
@@ -34,6 +36,11 @@ export const api = {
     req<EvalResult>(`/api/experiments/${id}/evaluate`, {
       method: "POST",
       body: JSON.stringify(plan),
+    }),
+  sensitivity: (id: number, payload: SensitivityInput) =>
+    req<SensitivityResult>(`/api/experiments/${id}/sensitivity`, {
+      method: "POST",
+      body: JSON.stringify(payload),
     }),
   savePlan: (id: number, plan: PlanInput) =>
     req<{ id: number; result: EvalResult }>(

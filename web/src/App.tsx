@@ -7,6 +7,7 @@ import CurveChart from "./components/CurveChart";
 import CutEditor from "./components/CutEditor";
 import ResultsPanel from "./components/ResultsPanel";
 import IssuesPanel from "./components/IssuesPanel";
+import SensitivityPanel from "./components/SensitivityPanel";
 
 function defaultCuts(sample: CurveSample) {
   const [lo, hi] = sample.range.temp_c;
@@ -113,6 +114,20 @@ export default function App() {
     }
   };
 
+  // 把敏感性预览的某个切点值带回编辑器（触发正常重算，不直接写结果）
+  const applyPreview = useCallback(
+    (cutIndex: number, endpoint: "start" | "end", temp: number) => {
+      setCuts((prev) =>
+        prev.map((c, i) =>
+          i === cutIndex
+            ? { ...c, [endpoint === "start" ? "start_temp_c" : "end_temp_c"]: temp }
+            : c
+        )
+      );
+    },
+    []
+  );
+
   const loadSeed = async () => {
     try {
       const r = await api.seed();
@@ -182,6 +197,16 @@ export default function App() {
             onBasisChange={setBasis}
             onPlanNameChange={setPlanName}
           />
+
+          {expId !== null && (
+            <SensitivityPanel
+              expId={expId}
+              plan={payload}
+              range={sample.range.temp_c}
+              basis={basis}
+              onApply={applyPreview}
+            />
+          )}
 
           <ResultsPanel result={result} basis={basis} />
 

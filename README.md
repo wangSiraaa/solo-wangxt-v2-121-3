@@ -43,6 +43,11 @@
      试验损失是"未回收残渣"内部的明细（净额 = 毛额 − 损失），不另外相加。
    - 质量基准同一套区间逻辑；若密度表/进料密度不自洽（反算馏出液平均密度与
      进料密度不符），给出残差与核实建议，体积平衡仍成立。
+7. **切点敏感性预览**（`sensitivity.py`）：选一个馏分切点与扰动步长 ΔT，按
+   下调/原值/上调三情景复用同一套 `evaluate_plan` 重算各馏分产率、重叠缺口与
+   闭合，并给出逐馏分增量以标出变化最大的馏分。预览只计算不落库；扰动越界时
+   情景被标明并按边界截断（不虚构范围外数值），密度覆盖规则与主计算一致；
+   前端可把任一预览切点值带回编辑器重新计算。
 
 ## 三组内置算例（`data/seed.json`）
 
@@ -89,7 +94,7 @@ npm run dev        # http://localhost:5173 ，/api 已代理到 8000
 ### 测试
 
 ```bash
-cd backend && python3 -m pytest -q   # 26 个用例：插值/密度/重叠/缺口/闭合/API
+cd backend && python3 -m pytest -q   # 37 个用例：插值/密度/重叠/缺口/闭合/敏感性预览/API
 cd web && npm run build              # tsc 类型检查 + 构建
 ```
 
@@ -101,6 +106,7 @@ cd web && npm run build              # tsc 类型检查 + 构建
 | POST | `/api/experiments` | 录入试验（曲线下降等硬错误返回 422 及问题清单） |
 | GET | `/api/experiments/{id}/curve/sample` | 实测范围内的 PCHIP 取样曲线（画图用） |
 | POST | `/api/experiments/{id}/evaluate` | 按切点实时计算，不落库 |
+| POST | `/api/experiments/{id}/sensitivity` | 单切点 ±ΔT 敏感性预览（下调/原值/上调三情景，只计算不落库） |
 | POST | `/api/experiments/{id}/plans` | 保存方案（同时存结果快照） |
 | GET | `/api/plans/{id}/export?format=markdown\|json` | 导出 |
 

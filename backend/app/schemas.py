@@ -73,3 +73,11 @@ class PlanOut(BaseModel):
     result_snapshot: dict | None = None
 
     model_config = {"from_attributes": True}
+
+
+# ---- 切点敏感性预览（只计算，不落库）----
+class SensitivityIn(BaseModel):
+    plan: PlanIn = Field(..., description="当前编辑器中的方案（不保存）")
+    cut_index: int = Field(..., ge=0, description="被扰动的馏分下标（0 起）")
+    endpoint: Literal["start", "end"] = Field(..., description="扰动该馏分的初馏点还是终馏点")
+    step_c: float = Field(..., gt=0, le=300, description="温度扰动步长 ℃（>0）")

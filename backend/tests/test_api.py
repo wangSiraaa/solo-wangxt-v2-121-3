@@ -96,3 +96,91 @@ def test_export_json_declares_scope_and_range(client):
     assert "不外推" in js["scope_notice"]
     assert js["result"]["applicable_range"]["extrapolation"] == "none"
     assert "PCHIP" in js["result"]["method"]["interpolation"]
+
+
+def _mk_experiment(client) -> int:
+    payload = {
+        "name": "敏感性测试试验",
+        "feed_density_g_cm3": 0.8,
+        "residue_density_g_cm3": 0.95,
+        "points": [
+            {"temp_c": 10, "recovered_pct": 0},
+            {"temp_c": 60, "recovered_pct": 25},
+            {"temp_c": 110, "recovered_pct": 50},
+            {"temp_c": 160, "recovered_pct": 75},
+            {"temp_c": 200, "recovered_pct": 95},
+        ],
+        "density_rows": [
+            {"temp_c": 10, "density_g_cm3": 0.70},
+            {"temp_c": 110, "density_g_cm3": 0.80},
+            {"temp_c": 200, "density_g_cm3": 0.90},
+        ],
+    }
+    r = client.post("/api/experiments", json=payload)
+    assert r.status_code == 201, r.text
+    return r.json()["id"]
+
+
+_PLAN = {
+    "name": "sens",
+    "basis": "volume",
+    "loss_pct": 0,
+    "cuts": [
+        {"name": "轻", "start_temp_c": 10, "end_temp_c": 80},
+        {"name": "中", "start_temp_c": 80, "end_temp_c": 150},
+        {"name": "重", "start_temp_c": 150, "end_temp_c": 200},
+    ],
+}
+
+
+def test_sensitivity_preview_api_and_apply_back(client):
+    eid = _mk_experiment(client)
+    body = {"plan": _PLAN, "cut_index": 1, "endpoint": "end", "step_c": 10}
+    r = client.post(f"/api/experiments/{eid}/sensitivity", json=body)
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert [s["key"] for s in data["scenarios"]] == ["down", "base", "up"]
+    assert data["original_temp_c"] == 150
+    # 预览不写入已保存方案
+    assert client.get(f"/api/experiments/{eid}").json()["plans"] == []
+
+    base = data["scenarios"][1]["result"]
+    live = client.post(f"/api/experiments/{eid}/evaluate", json=_PLAN).json()
+    assert base["cuts"] == live["cuts"] and base["totals"] == live["totals"]
+
+    # 扰动只影响相关馏分：未扰动馏分产率不变
+    for s in (data["scenarios"][0], data["scenarios"][2]):
+        assert s["result"]["cuts"][0]["volume_yield_pct"] == base["cuts"][0]["volume_yield_pct"]
+        assert s["result"]["cuts"][2]["volume_yield_pct"] == base["cuts"][2]["volume_yield_pct"]
+        assert s["most_affected_cut_index"] == 1
+
+    # 把「上调」预览值带回编辑器重算 => 与预览情景完全一致
+    up = data["scenarios"][2]
+    reapplied = {**_PLAN, "cuts": [dict(c) for c in _PLAN["cuts"]]}
+    reapplied["cuts"][1]["end_temp_c"] = up["temp_c"]
+    again = client.post(f"/api/experiments/{eid}/evaluate", json=reapplied).json()
+    assert again["cuts"] == up["result"]["cuts"]
+    assert again["totals"]["identity_ok"]
+
+
+def test_sensitivity_out_of_range_marked(client):
+    eid = _mk_experiment(client)
+    plan = {**_PLAN, "cuts": [{"name": "尾", "start_temp_c": 150, "end_temp_c": 200}]}
+    body = {"plan": plan, "cut_index": 0, "endpoint": "end", "step_c": 10}
+    data = client.post(f"/api/experiments/{eid}/sensitivity", json=body).json()
+    up = data["scenarios"][2]
+    assert up["out_of_range"] and "不外推" in up["range_note"]
+    row = up["result"]["cuts"][0]
+    assert row["end_recovery_pct"] is None  # 不虚构范围外回收率
+    assert row["volume_yield_pct"] == data["scenarios"][1]["result"]["cuts"][0]["volume_yield_pct"]
+
+
+def test_sensitivity_validation(client):
+    eid = _mk_experiment(client)
+    bad_idx = {"plan": _PLAN, "cut_index": 9, "endpoint": "end", "step_c": 10}
+    assert client.post(f"/api/experiments/{eid}/sensitivity", json=bad_idx).status_code == 422
+    bad_step = {"plan": _PLAN, "cut_index": 0, "endpoint": "end", "step_c": 0}
+    assert client.post(f"/api/experiments/{eid}/sensitivity", json=bad_step).status_code == 422
+    assert client.post("/api/experiments/99999/sensitivity", json={
+        "plan": _PLAN, "cut_index": 0, "endpoint": "end", "step_c": 10,
+    }).status_code == 404
